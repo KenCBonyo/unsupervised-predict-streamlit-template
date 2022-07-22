@@ -39,13 +39,30 @@ from recommenders.content_based import content_model
 
 # Data Loading
 title_list = load_movie_titles('resources/data/movies.csv')
+movies= pd.read_csv("resources/data/movies.csv")
+movies["genres"] = movies["genres"].str.replace('|', ' ', regex=True)
+movies["genres"] = movies["genres"].str.replace('(', ' ', regex=True)
+movies["genres"] = movies["genres"].str.replace(')', ' ', regex=True)
+movies["title"] = movies["title"].str.replace('(', ' ', regex=True)
+movies["title"] = movies["title"].str.replace(')', ' ', regex=True)
+movies["title"] = movies["title"].str.strip()
+#insert into a new column named "movie_prod_year"
+movies["movie_year"] = movies["title"].str[-4:]#extract last 4digits
+movies["movie_year"] = movies["movie_year"].str.replace(r'[a-zA-Z]', '', regex=True)
+movies["movie_year"] = movies["movie_year"].str.replace(r'[^a-zA-Z0-9]', '', regex= True)
+movies["movie_year"] =movies["movie_year"].str.replace(r' ', '', regex=True)
+movies["title"] = movies["title"].str[:-4]
+movies["title"] = movies["title"].str.rstrip()
+movies_list=movies.sort_values(by=['genres', 'movie_year'], ascending=False)
+
+
 
 # App declaration
 def main():
 
     # DO NOT REMOVE the 'Recommender System' option below, however,
     # you are welcome to add more options to enrich your app.
-    page_options = ["Recommender System","Solution Overview"]
+    page_options = ["Recommender System","Solution Overview", "About Us", "Get movie by genre"]
 
     # -------------------------------------------------------------------
     # ----------- !! THIS CODE MUST NOT BE ALTERED !! -------------------
@@ -101,8 +118,74 @@ def main():
 
     # ------------- SAFE FOR ALTERING/EXTENSION -------------------
     if page_selection == "Solution Overview":
-        st.title("Solution Overview")
-        st.write("Describe your winning approach on this page")
+        st.image('resources/imgs/Originals_Logo.png',width=400)
+        
+        st.title("Interesting Insights")
+        st.markdown("Here are some insight that can help you decision making")
+
+        
+        st.image('resources/imgs/image2.png',use_column_width=True)
+        st.write("This chart shows the top 30 most rated movies. Shawshank Redemption got the most rating. Some movies got an average of 5 stars rating, but in the course of our analysis, we discovered that the number of ratings they got was very few, hence that was possible. What this chart shows is that, Shawshank Redemption got the most number of Users rating it >3.9 .")
+        
+        st.image('resources/imgs/image3.png',use_column_width=True)
+        st.write("This chart shows the top 30 movie viewers. This information is useful to identify the movie preference of top customers. these top customers are most likely influencers and can make users watch a movie they probably wouldn't have considered watching.")
+        
+        st.image('resources/imgs/image4.png',use_column_width=True)
+        st.write("This chart shows the years with the highest number of movies produced. This information will help you to visually explore how the movie industry has performed over the years")
+        
+        st.image('resources/imgs/image5.png',use_column_width=True)
+        st.write("This chart shows the genres that appears most in the dataset we trained our model with. This information will enable us understand the genres of movies produced most for the period the data was captured.")
+        
+    if page_selection == "About Us":
+        st.image('resources/imgs/Originals_Logo.png',width=400)
+        
+        st.title("About Us")
+        st.write("The source, the core from where every creativity and ingenuity emanates, \
+                  The Originals, we are a team of data scientist, sold out to solving \
+                  real human problems with flavour and style. ")
+        
+        st.image('resources/imgs/pheel.png',use_column_width=True)
+        
+        st.title("Our Mission")
+        st.write("Use data to optimize human possibilities of attaining excellence, one solution at a time.")
+        
+        st.title("Our Vision")
+        st.write("Improve living conditions, championing new innovations powered by data")
+
+
+
+    if page_selection == "Get movie by genre":
+        st.image('resources/imgs/Originals_Logo.png',width=400)
+        genres= movies_list.groupby(['genres'])['genres'].count().reset_index(name='Count').sort_values(['Count'], ascending=False)
+        genre_list=list(genres['genres'])
+        year_list=movies["movie_year"].sort_values()
+        st.title("Movie Recommendation by year")
+		#st.subheader("Climate change tweet classification")
+        genre= st.selectbox("What genre would you be interested in",genre_list)
+        year= st.selectbox("What year would you be interested in",year_list.unique())
+        fave=[genre, year]
+
+
+        if st.button("recommend movies"):
+            if year in movies_list['movie_year'].to_list():
+            #for genre, year in fave:
+                #if genre and year in fave:
+                    #output= movies_list[movies_list['genres','movie_prod_year']== fave]
+                output_year= movies_list[movies_list['movie_year']== year]
+                output_year=pd.DataFrame(output_year)
+            if genre in movies_list['genres'].to_list():
+                output_genre=movies_list[movies_list['genres']== genre]
+                output_genre=pd.DataFrame(output_genre)
+            result=pd.merge(output_genre, output_year, on='movieId')
+            #result=pd.DataFrame(result)
+            result= result.drop("movieId", axis=1)
+            result= st.dataframe(result)
+            st.success(result)
+                
+                    
+
+
+
 
     # You may want to add more sections here for aspects such as an EDA,
     # or to provide your business pitch.
