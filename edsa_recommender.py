@@ -26,12 +26,14 @@
 
 """
 # Streamlit dependencies
+from nbformat import write
 import streamlit as st
 
 # Data handling dependencies
 import pandas as pd
 import numpy as np
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 # Custom Libraries
 from utils.data_loader import load_movie_titles
 from recommenders.collaborative_based import collab_model
@@ -40,6 +42,9 @@ from recommenders.content_based import content_model
 # Data Loading
 title_list = load_movie_titles('resources/data/movies.csv')
 movies= pd.read_csv("resources/data/movies.csv")
+imdb=pd.read_csv("resources/data/imdb_data.csv")
+columns=["userId","movieId"]
+ratings=pd.read_csv("resources/data/ratings.csv", usecols=columns)
 movies["genres"] = movies["genres"].str.replace('|', ' ', regex=True)
 movies["genres"] = movies["genres"].str.replace('(', ' ', regex=True)
 movies["genres"] = movies["genres"].str.replace(')', ' ', regex=True)
@@ -53,6 +58,8 @@ movies["movie_year"] = movies["movie_year"].str.replace(r'[^a-zA-Z0-9]', '', reg
 movies["movie_year"] =movies["movie_year"].str.replace(r' ', '', regex=True)
 movies["title"] = movies["title"].str[:-4]
 movies["title"] = movies["title"].str.rstrip()
+info_data= pd.merge(movies,imdb[['movieId','runtime','director', 'title_cast','budget']], on='movieId')
+info_data["title_cast"] = info_data["title_cast"].str.replace('|', ',', regex=True)
 movies_list=movies.sort_values(by=['genres', 'movie_year'], ascending=False)
 
 
@@ -62,7 +69,7 @@ def main():
 
     # DO NOT REMOVE the 'Recommender System' option below, however,
     # you are welcome to add more options to enrich your app.
-    page_options = ["Recommender System","Solution Overview", "About Us", "Get movie by genre"]
+    page_options = ["Recommender System","Solution Overview", "About Us", "Get movie by genre","snoop around"]
 
     # -------------------------------------------------------------------
     # ----------- !! THIS CODE MUST NOT BE ALTERED !! -------------------
@@ -123,18 +130,36 @@ def main():
         st.title("Interesting Insights")
         st.markdown("Here are some insight that can help you decision making")
 
-        
+        st.write('Genres')
         st.image('resources/imgs/image2.png',use_column_width=True)
-        st.write("This chart shows the top 30 most rated movies. Shawshank Redemption got the most rating. Some movies got an average of 5 stars rating, but in the course of our analysis, we discovered that the number of ratings they got was very few, hence that was possible. What this chart shows is that, Shawshank Redemption got the most number of Users rating it >3.9 .")
+        with st.expander("See Explanation"):
+            st.markdown("This chart shows the top 30 most rated movies. Shawshank Redemption got the most rating.\
+                 Some movies got an average of 5 stars rating, but in the course of our analysis, we discovered\
+                  that the number of ratings they got was very few, hence that was possible. What this chart shows is that,\
+                     Shawshank Redemption got the most number of Users rating it >3.9 .")
         
-        st.image('resources/imgs/image3.png',use_column_width=True)
-        st.write("This chart shows the top 30 movie viewers. This information is useful to identify the movie preference of top customers. these top customers are most likely influencers and can make users watch a movie they probably wouldn't have considered watching.")
+        st.write('Users')
+        user_rating= ratings.groupby('userId')['movieId'].nunique().reset_index(name='movieIdCount')
+        user_rating.sort_values(by=['movieIdCount'], ascending=False)
+        user_rating = user_rating.nlargest(columns='movieIdCount', n = 10)   
+        plt.figure(figsize=(10,5))
+        st.bar_chart(data=user_rating)
+        #ax = sns.barplot(data=user_rating, x= 'userId', y = 'movieIdCount')
+        #ax.set(ylabel = "count of movies rated", xlabel='UserId')
+        plt.title("Top 10 Users")
+        #st.pyplot(fig)
+        #st.image('resources/imgs/image3.png',use_column_width=True)
+        with st.expander("See Explanation"):
+            st.markdown("This chart shows the top 30 movie viewers. This information is useful to identify the movie preference\
+                of top customers. these top customers are most likely influencers and can make users watch a movie they probably\
+                     wouldn't have considered watching.")
         
         st.image('resources/imgs/image4.png',use_column_width=True)
         st.write("This chart shows the years with the highest number of movies produced. This information will help you to visually explore how the movie industry has performed over the years")
         
-        st.image('resources/imgs/image5.png',use_column_width=True)
-        st.write("This chart shows the genres that appears most in the dataset we trained our model with. This information will enable us understand the genres of movies produced most for the period the data was captured.")
+        st.write('Modelling')
+        st.image('resources/imgs/rec-systems.png',use_column_width=True)
+        st.markdown("Gain a little insight into how we built our model.")
         
     if page_selection == "About Us":
         st.image('resources/imgs/Originals_Logo.png',width=400)
@@ -159,7 +184,7 @@ def main():
         genres= movies_list.groupby(['genres'])['genres'].count().reset_index(name='Count').sort_values(['Count'], ascending=False)
         genre_list=list(genres['genres'])
         year_list=movies["movie_year"].sort_values()
-        st.title("Movie Recommendation by year")
+        st.title("Get movies by Genre and Year")
 		#st.subheader("Climate change tweet classification")
         genre= st.selectbox("What genre would you be interested in",genre_list)
         year= st.selectbox("What year would you be interested in",year_list.unique())
@@ -176,11 +201,38 @@ def main():
             if genre in movies_list['genres'].to_list():
                 output_genre=movies_list[movies_list['genres']== genre]
                 output_genre=pd.DataFrame(output_genre)
-            result=pd.merge(output_genre, output_year, on='movieId')
-            #result=pd.DataFrame(result)
+            result=pd.merge(output_genre, output_year, on=['movie_year','movieId','genres','title'])
             result= result.drop("movieId", axis=1)
-            result= st.dataframe(result)
-            st.success(result)
+            if len(result)==0:
+                st.write("oops :disappointed: .... sorry, no movie available for this category just yet :disappointed: ")
+            elif len(result)<10:
+                st.write("we are so sorry, we only have ", len(result), "movies for this category at this time")
+                result=st.dataframe(result)
+            else:
+                result=result.sample(n=10)
+                result=st.dataframe(result)
+
+            #result=pd.DataFrame(result)
+            
+            #result= st.dataframe(result)
+            #st.success(result)
+
+    if page_selection == "snoop around":
+        st.image('resources/imgs/Originals_Logo.png',width=400)
+        st.title("Snoopy")
+        st.markdown("want to get more information about your favorite movies, you are in the right place. :wink: All you have to do \
+            is select or type the  title of the movie and voila!!!!")
+        titles_list=info_data.sort_values(by='title')
+        titles_list=titles_list["title"].unique()
+        titles= st.selectbox("What movie would you like to snoop :blush:",titles_list)
+        if st.button("snoop"):
+            if titles in info_data["title"].to_list():
+                output= info_data[info_data['title']== titles]
+                output=output.drop('movieId', axis=1)
+                output=st.dataframe(output)
+                #st.success(output)
+
+
                 
                     
 
