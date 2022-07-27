@@ -189,14 +189,14 @@ def main():
             st.markdown("In building the application, we made use of both collaborative and content based filtering.")
             st.write('Collaborative Filtering')
             SVD_url = "https://analyticsindiamag.com/singular-value-decomposition-svd-application-recommender-system/"
-            ricked_url= "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            ricked_url= "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s"
             st.markdown('Collaborative filtering is a technique that can filter out items that a user might like on the basis of reactions\
                  by similar users. It works by searching a large group of people and finding a smaller set of users with tastes similar\
                      to a particular user. It looks at the items they like and combines them to create a ranked list of suggestions.\
                       There are many ways to decide which users are similar and combine their choices to create a list of recommendations.\
                         For this project, the dataset was trained using SVD model algorithm.\
                             You can read more on SVD model [here](%s)' % ricked_url)
-            st.markdown('oops, got ya!!! :satisfied:, meant [here](%s)' % SVD_url)
+#             st.markdown('oops, got ya!!! :satisfied:, meant [here](%s)' % SVD_url)
             st.write('Content-based Filtering')
             st.markdown("Content-based filtering is a type of recommender system that attempts to guess what a user may\
                  like based on that user’s activity. Content-based filtering makes recommendations by using keywords \
