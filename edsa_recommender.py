@@ -26,6 +26,7 @@
 
 """
 # Streamlit dependencies
+from matplotlib.style import use
 from nbformat import write
 import streamlit as st
 
@@ -34,6 +35,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import altair as alt
 # Custom Libraries
 from utils.data_loader import load_movie_titles
 from recommenders.collaborative_based import collab_model
@@ -69,7 +71,7 @@ def main():
 
     # DO NOT REMOVE the 'Recommender System' option below, however,
     # you are welcome to add more options to enrich your app.
-    page_options = ["Recommender System","Solution Overview", "About Us", "Get movie by genre","snoop around"]
+    page_options = ["Recommender System","About Us", "Get movie by genre","snoop around", "Solution Overview", ]
 
     # -------------------------------------------------------------------
     # ----------- !! THIS CODE MUST NOT BE ALTERED !! -------------------
@@ -127,39 +129,81 @@ def main():
     if page_selection == "Solution Overview":
         st.image('resources/imgs/Originals_Logo.png',width=400)
         
-        st.title("Interesting Insights")
+        st.header("Interesting Insights")
         st.markdown("Here are some insight that can help you decision making")
 
-        st.write('Genres')
-        st.image('resources/imgs/image2.png',use_column_width=True)
+        st.title('Year')
+        movie_prod_by_year= movies.groupby('movie_year')['movieId'].nunique().reset_index(name='movieIdCount')
+        movie_prod_by_year.sort_values(by=['movieIdCount'], ascending=False)
+        movie_prod_by_year= movie_prod_by_year.nlargest(columns='movieIdCount', n = 20) 
+        data_year = pd.DataFrame({
+            'index': movie_prod_by_year['movie_year'],
+            'movie_count': movie_prod_by_year['movieIdCount'],}).set_index('index')
+        with st.expander('See top 10 genres data'):
+            st.write(data_year)
+        st.line_chart(data_year)
         with st.expander("See Explanation"):
-            st.markdown("This chart shows the top 30 most rated movies. Shawshank Redemption got the most rating.\
-                 Some movies got an average of 5 stars rating, but in the course of our analysis, we discovered\
-                  that the number of ratings they got was very few, hence that was possible. What this chart shows is that,\
-                     Shawshank Redemption got the most number of Users rating it >3.9 .")
+            st.markdown("This chart shows the top ten years with the highest number of movies produced.\
+                 It shows a trend in how the movie industry has grown over the years in the number of movies produced.\
+                    We can see a consistent increase over the years, and a sharp decline in 2019, this, we assume can be due to the\
+                        pandemic outbreak in the year 2019.")
+
+        st.title('Genres')
+        genre_count= movies.groupby('genres')['genres'].count().reset_index(name='movieIdCount')
+        genre_count.sort_values(by=['movieIdCount'], ascending=False)
+        genre_count = genre_count.nlargest(columns='movieIdCount', n = 10)
+        data_genre = pd.DataFrame({'index':genre_count['genres'], 
+        'movie_count':genre_count['movieIdCount'],}).set_index('index')
+        #data_genre= data_genre.sort_values(by='movie_count', ascending=False)
+        with st.expander('See top 10 genres data'):
+            st.write(genre_count)
+        st.bar_chart(data_genre)
+        with st.expander("See Explanation"):
+            st.markdown("This chart shows the top 10 most viewed and rated genre. We see Drama genre leading the way followed by \
+                the comedy genre. This can help in budgeting for genre of movies to have on the platform.")
         
-        st.write('Users')
+        st.title('Users')
         user_rating= ratings.groupby('userId')['movieId'].nunique().reset_index(name='movieIdCount')
         user_rating.sort_values(by=['movieIdCount'], ascending=False)
         user_rating = user_rating.nlargest(columns='movieIdCount', n = 10)   
-        plt.figure(figsize=(10,5))
-        st.bar_chart(data=user_rating)
-        #ax = sns.barplot(data=user_rating, x= 'userId', y = 'movieIdCount')
-        #ax.set(ylabel = "count of movies rated", xlabel='UserId')
-        plt.title("Top 10 Users")
-        #st.pyplot(fig)
-        #st.image('resources/imgs/image3.png',use_column_width=True)
+        #plt.figure(figsize=(10,5))
+        data = pd.DataFrame({
+            'index': user_rating['userId'],
+            'movie_count': user_rating['movieIdCount'],}).set_index('index')
+        with st.expander('See top 10 users data'):
+            st.write(ratings)
+        st.bar_chart(data)
         with st.expander("See Explanation"):
-            st.markdown("This chart shows the top 30 movie viewers. This information is useful to identify the movie preference\
-                of top customers. these top customers are most likely influencers and can make users watch a movie they probably\
-                     wouldn't have considered watching.")
+            st.markdown("This chart shows the top 10 movie viewers. User 547 has the highest number of movies viewed and rated\
+                     with a huge gap and every other user. It can be hypothesised that this user is most likely\
+                        an influencer. If he is, we can look out for movies that he rates highly and make sure such movies are also on our \
+                            platform for other users to watch")
         
-        st.image('resources/imgs/image4.png',use_column_width=True)
-        st.write("This chart shows the years with the highest number of movies produced. This information will help you to visually explore how the movie industry has performed over the years")
+        #st.image('resources/imgs/image4.png',use_column_width=True)
         
-        st.write('Modelling')
+        
+        st.title('Modelling')
         st.image('resources/imgs/rec-systems.png',use_column_width=True)
         st.markdown("Gain a little insight into how we built our model.")
+        with st.expander("See Explanation"):
+            st.markdown("In building the application, we made use of both collaborative and content based filtering.")
+            st.write('Collaborative Filtering')
+            SVD_url = "https://analyticsindiamag.com/singular-value-decomposition-svd-application-recommender-system/"
+            st.markdown('Collaborative filtering is a technique that can filter out items that a user might like on the basis of reactions\
+                 by similar users. It works by searching a large group of people and finding a smaller set of users with tastes similar\
+                     to a particular user. It looks at the items they like and combines them to create a ranked list of suggestions.\
+                      There are many ways to decide which users are similar and combine their choices to create a list of recommendations.\
+                        For this project, the dataset was trained using SVD model algorithm.\
+                            You can read more on SVD model [here](%s)' % SVD_url)
+            st.write('Content-based Filtering')
+            st.markdown("Content-based filtering is a type of recommender system that attempts to guess what a user may\
+                 like based on that user’s activity. Content-based filtering makes recommendations by using keywords \
+                    and attributes assigned to objects in a database (e.g., items in an online marketplace) and matching \
+                        them to a user profile. The user profile is created based on data derived from a user’s actions, \
+                            such as genres of movies watched, ratings (likes and dislikes), directors, cast of the movies e.t.c")
+
+
+        
         
     if page_selection == "About Us":
         st.image('resources/imgs/Originals_Logo.png',width=400)
@@ -224,12 +268,14 @@ def main():
             is select or type the  title of the movie and voila!!!!")
         titles_list=info_data.sort_values(by='title')
         titles_list=titles_list["title"].unique()
-        titles= st.selectbox("What movie would you like to snoop :blush:",titles_list)
+        titles= st.selectbox("What movie would you like to snoop around",titles_list)
         if st.button("snoop"):
             if titles in info_data["title"].to_list():
                 output= info_data[info_data['title']== titles]
                 output=output.drop('movieId', axis=1)
-                output=st.dataframe(output)
+                st.write('Here are some informations about the movie')
+                output=st.table(output)
+                #output=st.dataframe(output)
                 #st.success(output)
 
 
