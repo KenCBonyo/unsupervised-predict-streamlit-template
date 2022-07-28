@@ -58,9 +58,9 @@ def data_preprocessing(subset_size):
     #copy of the dataframe
     movies_df = movies.copy()
     #Removal of the Year string
-    movies_df['title'] = movies['title'].str[:-7]
+    #movies_df['title'] = movies['title'].str[:-7]
     # Subset of the data
-    movies_subset = movies_df[:subset_size]
+    movies_subset = movies[:subset_size]
     return movies_subset
 
 # !! DO NOT CHANGE THIS FUNCTION SIGNATURE !!
