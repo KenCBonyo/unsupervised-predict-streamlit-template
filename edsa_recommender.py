@@ -71,7 +71,7 @@ def main():
 
     # DO NOT REMOVE the 'Recommender System' option below, however,
     # you are welcome to add more options to enrich your app.
-    page_options = ["Recommender System","About Us", "Get movie by genre","snoop around", "Solution Overview", ]
+    page_options = ["Recommender System","About Us", "Get movie by genre","Snoop movies", "Solution Overview", ]
 
     # -------------------------------------------------------------------
     # ----------- !! THIS CODE MUST NOT BE ALTERED !! -------------------
@@ -130,7 +130,7 @@ def main():
         st.image('resources/imgs/Originals_Logo.png',width=400)
         
         st.header("Interesting Insights")
-        st.markdown("Here are some insight that can help you decision making")
+        st.markdown("Here are some insights from the data that can help in decision making")
 
         st.title('Year')
         movie_prod_by_year= movies.groupby('movie_year')['movieId'].nunique().reset_index(name='movieIdCount')
@@ -139,13 +139,13 @@ def main():
         data_year = pd.DataFrame({
             'index': movie_prod_by_year['movie_year'],
             'movie_count': movie_prod_by_year['movieIdCount'],}).set_index('index')
-        with st.expander('See number of years data'):
+        with st.expander('See number of movies produced per year'):
             st.write(data_year)
         st.line_chart(data_year)
-        with st.expander("See Explanation"):
-            st.markdown("This chart shows the top ten years with the highest number of movies produced.\
-                 It shows a trend in how the movie industry has grown over the years in the number of movies produced.\
-                    We can see a consistent increase over the years, and a sharp decline in 2019, this, we assume can be due to the\
+        with st.expander("Open Explanation"):
+            st.markdown("This chart shows the number of movies produced per year.\
+                 It shows a trend on how the movie industry has grown over the years in the number of movies produced.\
+                    We can see a consistent increase over the years, and a sharp decline in 2019, this, we suspect is be due to the\
                         pandemic outbreak in the year 2019.")
 
         st.title('Genres')
@@ -155,12 +155,12 @@ def main():
         data_genre = pd.DataFrame({'index':genre_count['genres'], 
         'movie_count':genre_count['movieIdCount'],}).set_index('index')
         #data_genre= data_genre.sort_values(by='movie_count', ascending=False)
-        with st.expander('See top 10 genres data'):
+        with st.expander('See top 10 genres'):
             st.write(genre_count)
         st.bar_chart(data_genre)
-        with st.expander("See Explanation"):
-            st.markdown("This chart shows the top 10 most viewed and rated genre. We see Drama genre leading the way followed by \
-                the comedy genre. This can help in budgeting for genre of movies to have on the platform.")
+        with st.expander("Open Explanation"):
+            st.markdown("This chart shows the top 10 most viewed and rated genres. We see the Drama genre leading the way followed by \
+                 the comedy genre. This can help in budgeting for a genre of movies to have on the platform.")
         
         st.title('Users')
         user_rating= ratings.groupby('userId')['movieId'].nunique().reset_index(name='movieIdCount')
@@ -170,12 +170,12 @@ def main():
         data = pd.DataFrame({
             'index': user_rating['userId'],
             'movie_count': user_rating['movieIdCount'],}).set_index('index')
-        with st.expander('See top 10 users data'):
+        with st.expander('See top 10 users'):
             st.write(user_rating)
         st.bar_chart(data)
-        with st.expander("See Explanation"):
+        with st.expander("Open Explanation"):
             st.markdown("This chart shows the top 10 movie viewers. User 547 has the highest number of movies viewed and rated\
-                     with a huge gap and every other user. It can be hypothesised that this user is most likely\
+                     with a huge gap and every other user. It can be hypothesized that this user is most likely\
                         an influencer. If he is, we can look out for movies that he rates highly and make sure such movies are also on our \
                             platform for other users to watch")
         
@@ -185,24 +185,24 @@ def main():
         st.title('Modelling')
         st.image('resources/imgs/rec-systems.png',use_column_width=True)
         st.markdown("Gain a little insight into how we built our model.")
-        with st.expander("See Explanation"):
-            st.markdown("In building the application, we made use of both collaborative and content based filtering.")
+        with st.expander("Open Explanation"):
+            st.markdown("In building the application, we made use of both collaborative and content-based filtering.")
             st.write('Collaborative Filtering')
             SVD_url = "https://analyticsindiamag.com/singular-value-decomposition-svd-application-recommender-system/"
             ricked_url= "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s"
-            st.markdown('Collaborative filtering is a technique that can filter out items that a user might like on the basis of reactions\
+            st.markdown('Collaborative filtering is a technique that can filter out items that a user might like based on reactions\
                  by similar users. It works by searching a large group of people and finding a smaller set of users with tastes similar\
                      to a particular user. It looks at the items they like and combines them to create a ranked list of suggestions.\
                       There are many ways to decide which users are similar and combine their choices to create a list of recommendations.\
-                        For this project, the dataset was trained using SVD model algorithm.\
-                            You can read more on SVD model [here](%s)' % ricked_url)
+                        For this project, the dataset was trained using the SVD model algorithm.\
+                            You can read more on the SVD model [here](%s)' % ricked_url)
 #             st.markdown('oops, got ya!!! :satisfied:, meant [here](%s)' % SVD_url)
             st.write('Content-based Filtering')
             st.markdown("Content-based filtering is a type of recommender system that attempts to guess what a user may\
                  like based on that user’s activity. Content-based filtering makes recommendations by using keywords \
                     and attributes assigned to objects in a database (e.g., items in an online marketplace) and matching \
                         them to a user profile. The user profile is created based on data derived from a user’s actions, \
-                            such as genres of movies watched, ratings (likes and dislikes), directors, cast of the movies e.t.c")
+                            such as genres of movies watched, ratings (likes and dislikes), directors, the cast of the movies e.t.c")
 
 
         
@@ -232,12 +232,12 @@ def main():
         year_list=movies["movie_year"].sort_values()
         st.title("Get movies by Genre and Year")
 		#st.subheader("Climate change tweet classification")
-        genre= st.selectbox("What genre would you be interested in",genre_list)
-        year= st.selectbox("What year would you be interested in",year_list.unique())
+        genre= st.selectbox("What genre are you interested in?",genre_list)
+        year= st.selectbox("What year are you interested in?",year_list.unique())
         fave=[genre, year]
 
 
-        if st.button("recommend movies"):
+        if st.button("Recommend movies"):
             if year in movies_list['movie_year'].to_list():
             #for genre, year in fave:
                 #if genre and year in fave:
@@ -263,14 +263,14 @@ def main():
             #result= st.dataframe(result)
             #st.success(result)
 
-    if page_selection == "snoop around":
+    if page_selection == "Snoop movies":
         st.image('resources/imgs/Originals_Logo.png',width=400)
         st.title("Snoopy")
-        st.markdown("want to get more information about your favorite movies, you are in the right place. :wink: All you have to do \
-            is select or type the  title of the movie and voila!!!!")
+        st.markdown("Do you want to get more information about your favorite movies? You are in the right place. :wink: All you have to do \
+            is select or type in the  title of the movie and voila!!!!")
         titles_list=info_data.sort_values(by='title')
         titles_list=titles_list["title"].unique()
-        titles= st.selectbox("What movie would you like to snoop around",titles_list)
+        titles= st.selectbox("What movie would you like to snoop",titles_list)
         if st.button("snoop"):
             if titles in info_data["title"].to_list():
                 output= info_data[info_data['title']== titles]
