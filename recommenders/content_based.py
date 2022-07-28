@@ -55,8 +55,12 @@ def data_preprocessing(subset_size):
     """
     # Split genre data into individual words.
     movies['keyWords'] = movies['genres'].str.replace('|', ' ')
+    #copy of the data to avoid continous slicing
+    movies_df = movies.copy()
+    #Removal of the Year string
+    movies_df['title'] = movies['title'].str[:-7]
     # Subset of the data
-    movies_subset = movies[:subset_size]
+    movies_subset = movies_df[:subset_size]
     return movies_subset
 
 # !! DO NOT CHANGE THIS FUNCTION SIGNATURE !!
@@ -81,10 +85,13 @@ def content_model(movie_list,top_n=10):
     # Initializing the empty list of recommended movies
     recommended_movies = []
     data = data_preprocessing(27000)
+    # Reducing the dataframe to optimize speed
+    new_df= data[14000:15200].append(data[25000:26255]).append(data[21000:22000])
+    new_df= new_df.reset_index(drop=True)
     # Instantiating and generating the count matrix
     count_vec = CountVectorizer()
-    count_matrix = count_vec.fit_transform(data['keyWords'])
-    indices = pd.Series(data['title'])
+    count_matrix = count_vec.fit_transform(new_df['keyWords'])
+    indices = pd.Series(new_df['title'])
     cosine_sim = cosine_similarity(count_matrix, count_matrix)
     # Getting the index of the movie that matches the title
     idx_1 = indices[indices == movie_list[0]].index[0]
